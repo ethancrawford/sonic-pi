@@ -191,19 +191,8 @@ MainWindow::MainWindow(QApplication &app, bool i18n, QSplashScreen* splash)
     clientSock = new QTcpSocket(this);
   }
 
-
-  QProcess* determineSendPortNumber = new QProcess();
-  QStringList send_args;
-  send_args << port_discovery_path << "gui-send-to-server";
-
-  determineSendPortNumber->start(ruby_path, send_args);
-  determineSendPortNumber->waitForFinished();
-  gui_send_to_server_port = determineSendPortNumber->readAllStandardOutput().trimmed().toInt();
-
-  if (gui_send_to_server_port == 0) {
-    std::cout << "[GUI] - unable to determine GUI->Server send port. Defaulting to 4557:" << std::endl;
-    gui_send_to_server_port = 4557;
-  }
+  port_service = new PortService(ruby_path, port_discovery_path);
+  gui_send_to_server_port = port_service->PortNumber(QString("gui-send-to-server"), QString("GUI->Server send port"), 4557);
 
   oscSender = new OscSender(gui_send_to_server_port);
 

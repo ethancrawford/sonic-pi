@@ -64,7 +64,8 @@ SOURCES += main.cpp \
            sonic_pi_udp_osc_server.cpp \
            sonic_pi_tcp_osc_server.cpp \
            sonicpitheme.cpp \
-           scope.cpp
+           scope.cpp \
+           portservice.cpp
 
 HEADERS  += mainwindow.h \
             oscpkt.hh \
@@ -80,7 +81,8 @@ HEADERS  += mainwindow.h \
             sonic_pi_tcp_osc_server.h \
             ruby_help.h \
             sonicpitheme.h \
-            scope.h
+            scope.h \
+            portservice.h
 
 TRANSLATIONS = lang/sonic-pi_de.ts \
                lang/sonic-pi_es.ts \

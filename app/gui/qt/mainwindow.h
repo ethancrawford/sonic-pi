@@ -42,6 +42,7 @@
 #include "sonicpitheme.h"
 #include "scope.h"
 #include "oscsender.h"
+#include "portservice.h"
 
 class QAction;
 class QMenu;
@@ -349,7 +350,7 @@ private:
     QString guiID;
     bool homeDirWritable, tmpFileStoreAvailable;
     bool updated_dark_mode_for_help, updated_dark_mode_for_prefs;
-
+    PortService *port_service;
     OscSender *oscSender;
     QSet<QString> cuePaths;
 };
