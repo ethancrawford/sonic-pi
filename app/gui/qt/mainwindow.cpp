@@ -193,118 +193,16 @@ MainWindow::MainWindow(QApplication &app, bool i18n, QSplashScreen* splash)
 
   port_service = new PortService(ruby_path, port_discovery_path);
   gui_send_to_server_port = port_service->PortNumber(QString("gui-send-to-server"), QString("GUI->Server send port"), 4557);
-
   oscSender = new OscSender(gui_send_to_server_port);
-
-  QProcess* determineListenPortNumber = new QProcess();
-  QStringList listen_args;
-  listen_args << port_discovery_path << "gui-listen-to-server";
-
-  determineListenPortNumber->start(ruby_path, listen_args);
-  determineListenPortNumber->waitForFinished();
-  gui_listen_to_server_port = determineListenPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (gui_listen_to_server_port == 0) {
-    std::cout << "[GUI] - unable to determine GUI<-Server listen port. Defaulting to 4558:" << std::endl;
-    gui_listen_to_server_port = 4558;
-  }
-
-  QProcess* determineServerListenPortNumber = new QProcess();
-  QStringList server_listen_args;
-  server_listen_args << port_discovery_path << "server-listen-to-gui";
-
-  determineServerListenPortNumber->start(ruby_path, server_listen_args);
-  determineServerListenPortNumber->waitForFinished();
-  server_listen_to_gui_port = determineServerListenPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (server_listen_to_gui_port == 0) {
-    std::cout << "[GUI] - unable to determine Server<-GUI listen port. Defaulting to 4557:" << std::endl;
-    server_listen_to_gui_port = 4557;
-  }
-
-  QProcess* determineServerOSCCuesPortNumber = new QProcess();
-  QStringList server_osc_cue_args;
-  server_osc_cue_args << port_discovery_path << "server-osc-cues";
-
-  determineServerOSCCuesPortNumber->start(ruby_path, server_osc_cue_args);
-  determineServerOSCCuesPortNumber->waitForFinished();
-  server_osc_cues_port = determineServerOSCCuesPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (server_osc_cues_port == 0) {
-    std::cout << "[GUI] - unable to determine Server OSC cue listen port. Defaulting to 4559:" << std::endl;
-    server_osc_cues_port = 4559;
-  }
-
-  QProcess* determineServerSendPortNumber = new QProcess();
-  QStringList server_send_args;
-  server_send_args << port_discovery_path << "server-send-to-gui";
-
-  determineServerSendPortNumber->start(ruby_path, server_send_args);
-  determineServerSendPortNumber->waitForFinished();
-  server_send_to_gui_port = determineServerSendPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (server_send_to_gui_port == 0) {
-    std::cout << "[GUI] - unable to determine Server->GUI send port. Defaulting to 4558:" << std::endl;
-    server_send_to_gui_port = 4558;
-  }
-
-  QProcess* determineScsynthPortNumber = new QProcess();
-  QStringList scsynth_args;
-  scsynth_args << port_discovery_path << "scsynth";
-
-  determineScsynthPortNumber->start(ruby_path, scsynth_args);
-  determineScsynthPortNumber->waitForFinished();
-  scsynth_port = determineScsynthPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (scsynth_port == 0) {
-    std::cout << "[GUI] - unable to determine scsynth port. Defaulting to 4556:" << std::endl;
-    scsynth_port = 4556;
-  }
-
-  QProcess* determineScsynthSendPortNumber = new QProcess();
-  QStringList scsynth_send_args;
-  scsynth_send_args << port_discovery_path << "scsynth-send";
-
-  determineScsynthSendPortNumber->start(ruby_path, scsynth_send_args);
-  determineScsynthSendPortNumber->waitForFinished();
-  scsynth_send_port = determineScsynthSendPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (scsynth_send_port == 0) {
-    std::cout << "[GUI] - unable to determine scsynth send port. Defaulting to 4556:" << std::endl;
-    scsynth_send_port = 4556;
-  }
-
-  QProcess* determineErlangRouterPortNumber = new QProcess();
-  QStringList erlang_router_args;
-  erlang_router_args << port_discovery_path << "erlang-router";
-
-  determineErlangRouterPortNumber->start(ruby_path, erlang_router_args);
-  determineErlangRouterPortNumber->waitForFinished();
-  erlang_router_port = determineErlangRouterPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (erlang_router_port == 0) {
-    std::cout << "[GUI] - unable to determine Erlang router port. Defaulting to 4560:" << std::endl;
-    erlang_router_port = 4560;
-  }
-
-
-  QProcess* determineOscMidiOutPortNumber = new QProcess();
-  QStringList osc_midi_out_args;
-  osc_midi_out_args << port_discovery_path << "osc-midi-out";
-
-  determineOscMidiOutPortNumber->start(ruby_path, osc_midi_out_args);
-  determineOscMidiOutPortNumber->waitForFinished();
-  osc_midi_out_port = determineOscMidiOutPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (osc_midi_out_port == 0) {
-    std::cout << "[GUI] - unable to determine OSC MIDI out port. Defaulting to 4561:" << std::endl;
-    osc_midi_out_port = 4561;
-  }
-
-
-  QProcess* determineOscMidiInPortNumber = new QProcess();
-  QStringList osc_midi_in_args;
-  osc_midi_in_args << port_discovery_path << "osc-midi-in";
-
-  determineOscMidiInPortNumber->start(ruby_path, osc_midi_in_args);
-  determineOscMidiInPortNumber->waitForFinished();
-  osc_midi_in_port = determineOscMidiInPortNumber->readAllStandardOutput().trimmed().toInt();
-  if (osc_midi_in_port == 0) {
-    std::cout << "[GUI] - unable to determine OSC MIDI in port. Defaulting to 4562:" << std::endl;
-    osc_midi_in_port = 4562;
-  }
+  gui_listen_to_server_port = port_service->PortNumber(QString("gui-listen-to-server"), QString("GUI<-Server listen"), 4558);
+  server_listen_to_gui_port = port_service->PortNumber(QString("server-listen-to-gui"), QString("Server<-GUI listen"), 4557);
+  server_osc_cues_port = port_service->PortNumber(QString("server-osc-cues"), QString("Server OSC cue listen"), 4559);
+  server_send_to_gui_port = port_service->PortNumber(QString("server-send-to-gui"), QString("Server->GUI send"), 4558);
+  scsynth_port = port_service->PortNumber(QString("scsynth"), QString("scsynth"), 4556);
+  scsynth_send_port = port_service->PortNumber(QString("scsynth-send"), QString("scsynth send"), 4556);
+  erlang_router_port = port_service->PortNumber(QString("erlang-router"), QString("Erlang router"), 4560);
+  osc_midi_out_port = port_service->PortNumber(QString("osc-midi-out"), QString("OSC MIDI out"), 4561);
+  osc_midi_in_port = port_service->PortNumber(QString("osc-midi-in"), QString("OSC MIDI in"), 4562);
 
   printAsciiArtLogo();
 
