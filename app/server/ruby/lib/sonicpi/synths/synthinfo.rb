@@ -179,6 +179,16 @@ module SonicPi
         @cached_buffer_args = buffer_args
       end
 
+      def wavetable_args
+        return @cached_wavetable_args if @cached_wavetable_args
+
+        wavetable_args = []
+        @info.each do |k, v|
+          wavetable_args << k if v[:wavetable]
+        end
+        @cached_wavetable_args = wavetable_args
+      end
+
       def midi_args
         return @cached_midi_args if @cached_midi_args
 
@@ -3125,6 +3135,67 @@ Steal This Sound,  Mitchell Sigman"
           :res_slide_shape => 1,
           :res_slide_curve => 0,
 
+        }
+      end
+    end
+
+    class Wave < SonicPiSynth
+      def name
+        "Wavetable Oscillator"
+      end
+
+      def introduced
+        Version.new(3, 0, 1)
+      end
+
+      def synth_name
+        "wave"
+      end
+
+      def doc
+        "blah"
+      end
+
+      # def munge_opts(_studio, args_h)
+      #   alias_opts!(:wave, :buffer, args_h)
+      #   args_h
+      # end
+
+      def arg_defaults
+        {
+          :note => 52,
+          :note_slide => 0,
+          :note_slide_shape => 1,
+          :note_slide_curve => 0,
+          :amp => 1,
+          :amp_slide => 0,
+          :amp_slide_shape => 1,
+          :amp_slide_curve => 0,
+          :pan => 0,
+          :pan_slide => 0,
+          :pan_slide_shape => 1,
+          :pan_slide_curve => 0,
+
+          :attack => 0,
+          :decay => 0,
+          :sustain => 0,
+          :release => 1,
+          :attack_level => 1,
+          :decay_level => :sustain_level,
+          :sustain_level => 1,
+          :env_curve => 2,
+          :wave => nil
+        }
+      end
+
+      def specific_arg_info
+        {
+          :wave =>
+          {
+            :doc => "Wave type - Different waves will produce different sounds.",
+            :modulatable => false,
+            :wavetable => true
+          }
         }
       end
     end
@@ -7532,6 +7603,7 @@ Use FX `:band_eq` with a negative db for the opposite effect - to attenuate a gi
         :piano => SynthPiano.new,
         :pluck => SynthPluck.new,
         :tech_saws => TechSaws.new,
+        :wave => Wave.new,
 
         :sound_in => SoundIn.new,
         :sound_in_stereo => SoundInStereo.new,

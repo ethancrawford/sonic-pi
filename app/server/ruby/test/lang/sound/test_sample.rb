@@ -25,7 +25,7 @@ module SonicPi
 
     def setup
       @lang = SonicPi::MockLang.new
-      @lang.mod_sound_studio.stubs(:sample_loaded?).returns(true)
+      @lang.mod_sound_studio.stubs(:sample_or_wavetable_loaded?).returns(true)
       @lang.stubs(:sample_find_candidates).returns(["/foo/bar.wav"])
     end
 

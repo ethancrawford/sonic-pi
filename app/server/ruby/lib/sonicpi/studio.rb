@@ -209,13 +209,19 @@ module SonicPi
 
       old_samples = @samples
       @samples = {}
+      old_wavetables = @wavetables
+      @wavetables = {}
 
       Thread.new do
         __system_thread_locals.set_local(:sonic_pi_local_thread_group, "Studio sample loader")
         Thread.current.priority = -10
-        (old_samples || {}).each do |k, v|
+        (old_samples || {}).each_key do |k|
           message "Reloading sample - #{unify_tilde_dir(k)}"
-          internal_load_sample(k, @server)
+          internal_load_sample(k, wavetable: false, server: @server)
+        end
+        (old_wavetables || {}).each_key do |k|
+          message "Reloading wavetable - #{unify_tilde_dir(k)}"
+          internal_load_sample(k, wavetable: true, server: @server)
         end
       end
 
@@ -294,37 +300,43 @@ module SonicPi
       internal_load_synthdefs(path, server)
     end
 
-    def sample_loaded?(path)
+    def sample_or_wavetable_loaded?(path, wavetable: false)
       return true if path.is_a?(Buffer)
       path = File.expand_path(path)
-      return @samples.has_key?(path)
+      if wavetable
+        @wavetables.key?(path)
+      else
+        @samples.key?(path)
+      end
     end
 
-    def load_sample(path, server=@server)
+    def load_sample(path, wavetable: false, server: @server)
       check_for_server_rebooting!(:load_sample)
-      internal_load_sample(path, server)
+      internal_load_sample(path, wavetable: wavetable, server: server)
     end
 
-    def free_sample(paths, server=@server)
+    def free_sample(paths, wavetable: false, server: @server)
       check_for_server_rebooting!(:free_sample)
       @sample_sem.synchronize do
         paths.each do |p|
           p = File.expand_path(p)
-          info = @samples[p]
-          @samples.delete(p)
+          file_hash = wavetable ? @wavetables : @samples
+          info = file_hash[p]
+          file_hash.delete(p)
           server.buffer_free(info) if info
         end
       end
       :free
     end
 
-    def free_all_samples(server=@server)
+    def free_all_samples(wavetable: false, server: @server)
       check_for_server_rebooting!(:free_all_samples)
       @sample_sem.synchronize do
-        @samples.each do |k, v|
+        file_hash = wavetable ? @wavetables : @samples
+        file_hash.each_value do |v|
           server.buffer_free(v)
         end
-        @samples = {}
+        wavetable ? @wavetables = {} : @samples = {}
       end
     end
 
@@ -647,20 +659,22 @@ module SonicPi
     end
 
 
-    def internal_load_sample(path, server=@server)
+    def internal_load_sample(path, wavetable: false, server: @server)
       path = File.expand_path(path)
-      return [@samples[path], true] if @samples[path]
+      cache = wavetable ? @wavetables : @samples
+      return [cache[path], true] if cache[path]
       #message "Loading full sample path: #{path}"
-      sample_info = nil
+      info = nil
       @sample_sem.synchronize do
-        return @samples[path] if @samples[path]
-        raise "No sample exists with path:\n  #{unify_tilde_dir(path).inspect}" unless File.exist?(path) && !File.directory?(path)
+        return cache[path] if cache[path]
+        type = wavetable ? 'wavetable' : 'sample'
+        raise "No #{type} exists with path:\n  #{unify_tilde_dir(path).inspect}" unless File.exist?(path) && !File.directory?(path)
         buf_info = server.buffer_alloc_read(path)
-        sample_info = SampleBuffer.new(buf_info, path)
-        @samples[path] = sample_info
+        info = SampleBuffer.new(buf_info, path)
+        cache[path] = info
       end
 
-      [sample_info, false]
+      [info, false]
     end
 
     def internal_load_synthdefs(path, server=@server)

@@ -2549,7 +2549,7 @@ set_volume! 2 # Set the main system volume to 2",
         path = resolve_sample_path(filts_and_sources)
 
         path = File.expand_path(path)
-        return @mod_sound_studio.sample_loaded?(path)
+        return @mod_sound_studio.sample_or_wavetable_loaded?(path)
       end
 
       doc name:          :sample_loaded?,
@@ -2564,6 +2564,11 @@ load_sample :elec_blip # :elec_blip is now loaded and ready to play as a sample
 puts sample_loaded? :elec_blip # prints true because it has been pre-loaded
 puts sample_loaded? :misc_burp # prints false because it has not been loaded"]
 
+      def load_wavetable(*args)
+        filts_and_sources, = sample_split_filts_and_opts(args)
+        path = sample_find_candidates(filts_and_sources, wavetable: true)[0]
+        load_sample_at_path(path, wavetable: true) if path
+      end
 
       def load_sample(*args)
         filts_and_sources, _ = sample_split_filts_and_opts(args)
@@ -2628,16 +2633,17 @@ load_sample dir, /[Bb]ar/ # loads first sample which matches regex /[Bb]ar/ in \
 
 
 
-      def load_sample_at_path(path)
+      def load_sample_at_path(path, wavetable: false)
+        type = wavetable ? 'wavetable' : 'sample'
         case path
         when String
-          raise "Attempted to load sample with an empty string as path" if path.empty?
+          raise "Attempted to load #{type} with an empty string as path" if path.empty?
           path = File.expand_path(path)
-          info, cached = @mod_sound_studio.load_sample(path)
-          __info "Loaded sample #{unify_tilde_dir(path).inspect}" unless cached
+          info, cached = @mod_sound_studio.load_sample(path, wavetable: wavetable)
+          __info "Loaded #{type} #{unify_tilde_dir(path).inspect}" unless cached
           return info
         else
-          raise "Unknown sample description: #{path.inspect}\n expected a string containing a path."
+          raise "Unknown #{type} description: #{path.inspect}\n expected a string containing a path."
         end
       end
 
@@ -2945,7 +2951,7 @@ sample_paths \"/path/to/samples/\", \"foo\" #=> ring of all samples in /path/to/
         # normalise_and_resolve_synth_args has only been taught about
         # synth thread local defaults
 
-        if @mod_sound_studio.sample_loaded?(path)
+        if @mod_sound_studio.sample_or_wavetable_loaded?(path)
           res_node = trigger_sampler path, args_h
         else
           res = Promise.new
@@ -3867,6 +3873,7 @@ play (chord_invert (chord :A3, \"M\"), 2) #Second inversion - (ring 64, 69, 73)
           args_h = info.munge_opts(@mod_sound_studio, args_h)
           resolve_midi_args!(args_h, info)
           resolve_buffer_args!(args_h, info)
+          resolve_wavetable_args!(args_h, info)
           add_arg_slide_times!(args_h, info)
           scale_time_args_to_bpm!(args_h, info, false)
         end
@@ -4223,7 +4230,7 @@ Also, if you wish your synth to work with Sonic Pi's automatic stereo sound infr
         args_h.keys.each do |k|
           v = args_h[k]
           case v
-          when Numeric, Buffer
+          when Numeric, Buffer, Array
             # do nothing
           when Proc
             res = v.call
@@ -4341,6 +4348,10 @@ Also, if you wish your synth to work with Sonic Pi's automatic stereo sound infr
 
       def trigger_inst(synth_name, args_h, info=nil, group=current_group)
         processed_args = normalise_and_resolve_synth_args(args_h, info, true)
+        if processed_args[:wave]
+          __delayed_message "wave #{processed_args[:wave].inspect}\n           - no match found, skipping."
+          return BlankNode.new(args_h)
+        end
 
         if __thread_locals.get(:sonic_pi_mod_sound_timing_guarantees)
           unless in_good_time?
@@ -4636,6 +4647,7 @@ Also, if you wish your synth to work with Sonic Pi's automatic stereo sound infr
           args_h = info.munge_opts(@mod_sound_studio, args_h)
           resolve_midi_args!(args_h, info)
           resolve_buffer_args!(args_h, info)
+          resolve_wavetable_args!(args_h, info)
         end
 
         normalise_args!(args_h, defaults)
@@ -4915,6 +4927,17 @@ Also, if you wish your synth to work with Sonic Pi's automatic stereo sound infr
         args_h
       end
 
+      def resolve_wavetable_args!(args_h, info)
+        info.wavetable_args.each do |arg_name|
+          if args_h.has_key?(arg_name)
+            wavetable_opt = args_h[arg_name]
+            args_h[:buf] = load_wavetable(wavetable_opt) ? load_wavetable(wavetable_opt).id : nil
+            args_h.delete(arg_name) if args_h[:buf]
+          end
+        end
+        args_h
+      end
+
       def add_arg_slide_times!(args_h, info)
         default_slide_time = args_h[:slide]
         if info && default_slide_time
@@ -4964,8 +4987,8 @@ Also, if you wish your synth to work with Sonic Pi's automatic stereo sound infr
         return n
       end
 
-      def sample_find_candidates(*args)
-        @sample_loader.find_candidates(*args)
+      def sample_find_candidates(*args, wavetable: false)
+        @sample_loader.find_candidates(*args, wavetable: wavetable)
       end
     end
 
