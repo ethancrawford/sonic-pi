@@ -7386,8 +7386,7 @@ Use FX `:band_eq` with a negative db for the opposite effect - to attenuate a gi
           {
             :doc => generic_slide_doc(:feedback),
             :validations => [v_positive(:feedback_slide)],
-            :modulatable => true,
-            :bpm_scale => true
+            :modulatable => true
           },
 
           :pan_start =>
