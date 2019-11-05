@@ -54,6 +54,7 @@ class SonicPiAPIs;
 class SonicPiLog;
 class SonicPiScintilla;
 class SonicPiOSCServer;
+class ShortcutService;
 class SonicPiTheme;
 class SonicPiLexer;
 class SonicPiSettings;
@@ -216,7 +217,6 @@ signals:
         void startRubyServer();
         bool waitForServiceSync();
         void clearOutputPanels();
-        void createShortcuts();
         void createToolBar();
         void createStatusBar();
         void createInfoPane();
@@ -239,20 +239,11 @@ signals:
         void addHelpPage(QListWidget *nameList, struct help_page *helpPages,
                 int len);
         QListWidget *createHelpTab(QString name);
-        QKeySequence metaKey(char key);
-        Qt::Modifier metaKeyModifier();
-        QKeySequence shiftMetaKey(char key);
-        QKeySequence ctrlMetaKey(char key);
-        QKeySequence ctrlShiftMetaKey(char key);
-        QKeySequence ctrlKey(char key);
-        char int2char(int i);
         void updateAction(QAction *action, QShortcut *sc, QString tooltip, QString desc);
         QString tooltipStrShiftMeta(char key, QString str);
         QString tooltipStrMeta(char key, QString str);
         QString readFile(QString name);
         QString rootPath();
-
-        void addUniversalCopyShortcuts(QTextEdit *te);
 
         QMenu *fileMenu, *editMenu, *windowMenu;
 
@@ -306,7 +297,6 @@ signals:
         QToolBar *toolBar;
 
         QAction *runAct, *stopAct, *saveAsAct, *loadFileAct, *recAct, *textAlignAct, *textIncAct, *textDecAct, *scopeAct, *infoAct, *helpAct, *prefsAct;
-        QShortcut *runSc, *stopSc, *saveAsSc, *loadFileSc, *recSc, *textAlignSc, *textIncSc, *textDecSc, *scopeSc, *infoSc, *helpSc, *prefsSc;
 
         SettingsWidget *settingsWidget;
 
@@ -342,7 +332,7 @@ signals:
 
         OscSender *oscSender;
         QSet<QString> cuePaths;
-
+        ShortcutService *shortcut_service;
 };
 
 #endif

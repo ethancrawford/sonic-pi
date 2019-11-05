@@ -64,6 +64,7 @@
 #include "widgets/infowidget.h"
 #include "model/settings.h"
 #include "widgets/settingswidget.h"
+#include "widgets/shortcutservice.h"
 
 #include "utils/ruby_help.h"
 
@@ -166,13 +167,13 @@ MainWindow::MainWindow(QApplication &app, bool i18n, QSplashScreen* splash)
     QApplication::setPalette(p);
 
     oscSender = new OscSender(gui_send_to_server_port);
-
+    shortcut_service = new ShortcutService(this);
     setupWindowStructure();
     createStatusBar();
     createInfoPane();
     setWindowTitle(tr("Sonic Pi"));
 
-    createShortcuts();
+    shortcut_service->CreateShortcuts();
     createToolBar();
     updateTabsVisibility();
     updateButtonVisibility();
@@ -457,7 +458,7 @@ void MainWindow::showWelcomeScreen() {
         startupPane->setFixedSize(600, 615);
         startupPane->setWindowIcon(QIcon(":images/icon-smaller.png"));
         startupPane->setWindowTitle(tr("Welcome to Sonic Pi"));
-        addUniversalCopyShortcuts(startupPane);
+        shortcut_service->addUniversalCopyShortcuts(startupPane);
         startupPane->document()->setDefaultStyleSheet(readFile(":/theme/light/doc-styles.css"));
         startupPane->setSource(QUrl("qrc:///html/startup.html"));
         docWidget->show();
@@ -558,112 +559,7 @@ void MainWindow::setupWindowStructure() {
         SonicPiScintilla *workspace = new SonicPiScintilla(lexer, theme, fileName, oscSender, auto_indent);
 
         workspace->setObjectName(QString("Buffer %1").arg(ws));
-
-        //tab completion when in list
-        QShortcut *indentLine = new QShortcut(QKeySequence("Tab"), workspace);
-        connect (indentLine, SIGNAL(activated()), signalMapper, SLOT(map())) ;
-        signalMapper -> setMapping (indentLine, (QObject*)workspace);
-
-        // save and load buffers
-        QShortcut *saveBufferShortcut = new QShortcut(shiftMetaKey('s'), workspace);
-        connect (saveBufferShortcut, SIGNAL(activated()), this, SLOT(saveAs())) ;
-        QShortcut *loadBufferShortcut = new QShortcut(shiftMetaKey('o'), workspace);
-        connect (loadBufferShortcut, SIGNAL(activated()), this, SLOT(loadFile())) ;
-
-
-        //transpose chars
-        QShortcut *transposeChars = new QShortcut(ctrlKey('t'), workspace);
-        connect (transposeChars, SIGNAL(activated()), workspace, SLOT(transposeChars())) ;
-
-        //move line or selection up and down
-        QShortcut *moveLineUp = new QShortcut(ctrlMetaKey('p'), workspace);
-        connect (moveLineUp, SIGNAL(activated()), workspace, SLOT(moveLineOrSelectionUp())) ;
-
-        QShortcut *moveLineDown = new QShortcut(ctrlMetaKey('n'), workspace);
-        connect (moveLineDown, SIGNAL(activated()), workspace, SLOT(moveLineOrSelectionDown())) ;
-
-        // Contextual help
-        QShortcut *contextHelp = new QShortcut(ctrlKey('i'), workspace);
-        connect (contextHelp, SIGNAL(activated()), this, SLOT(helpContext()));
-
-        QShortcut *contextHelp2 = new QShortcut(QKeySequence("F1"), workspace);
-        connect (contextHelp2, SIGNAL(activated()), this, SLOT(helpContext()));
-
-
-        // Font zooming
-        QShortcut *fontZoom = new QShortcut(metaKey('='), workspace);
-        connect (fontZoom, SIGNAL(activated()), workspace, SLOT(zoomFontIn()));
-
-        QShortcut *fontZoom2 = new QShortcut(metaKey('+'), workspace);
-        connect (fontZoom2, SIGNAL(activated()), workspace, SLOT(zoomFontIn()));
-
-
-        QShortcut *fontZoomOut = new QShortcut(metaKey('-'), workspace);
-        connect (fontZoomOut, SIGNAL(activated()), workspace, SLOT(zoomFontOut()));
-
-        QShortcut *fontZoomOut2 = new QShortcut(metaKey('_'), workspace);
-        connect (fontZoomOut2, SIGNAL(activated()), workspace, SLOT(zoomFontOut()));
-
-        //set Mark
-#ifdef Q_OS_MAC
-        QShortcut *setMark = new QShortcut(QKeySequence("Meta+Space"), workspace);
-#else
-        QShortcut *setMark = new QShortcut(QKeySequence("Ctrl+Space"), workspace);
-#endif
-        connect (setMark, SIGNAL(activated()), workspace, SLOT(setMark())) ;
-
-        //escape
-        QShortcut *escape = new QShortcut(ctrlKey('g'), workspace);
-        QShortcut *escape2 = new QShortcut(QKeySequence("Escape"), workspace);
-        connect(escape, SIGNAL(activated()), this, SLOT(escapeWorkspaces()));
-        connect(escape2, SIGNAL(activated()), this, SLOT(escapeWorkspaces()));
-
-        //quick nav by jumping up and down 1 lines at a time
-        QShortcut *forwardOneLine = new QShortcut(ctrlKey('p'), workspace);
-        connect(forwardOneLine, SIGNAL(activated()), workspace, SLOT(forwardOneLine()));
-        QShortcut *backOneLine = new QShortcut(ctrlKey('n'), workspace);
-        connect(backOneLine, SIGNAL(activated()), workspace, SLOT(backOneLine()));
-
-        //quick nav by jumping up and down 10 lines at a time
-        QShortcut *forwardTenLines = new QShortcut(shiftMetaKey('u'), workspace);
-        connect(forwardTenLines, SIGNAL(activated()), workspace, SLOT(forwardTenLines()));
-        QShortcut *backTenLines = new QShortcut(shiftMetaKey('d'), workspace);
-        connect(backTenLines, SIGNAL(activated()), workspace, SLOT(backTenLines()));
-
-        //cut to end of line
-        QShortcut *cutToEndOfLine = new QShortcut(ctrlKey('k'), workspace);
-        connect(cutToEndOfLine, SIGNAL(activated()), workspace, SLOT(cutLineFromPoint()));
-
-        //Emacs live copy and cut
-        QShortcut *copyToBuffer = new QShortcut(metaKey(']'), workspace);
-        connect(copyToBuffer, SIGNAL(activated()), workspace, SLOT(copyClear()));
-
-        QShortcut *cutToBufferLive = new QShortcut(ctrlKey(']'), workspace);
-        connect(cutToBufferLive, SIGNAL(activated()), workspace, SLOT(sp_cut()));
-
-        // Standard cut
-        QShortcut *cutToBuffer = new QShortcut(ctrlKey('x'), workspace);
-        connect(cutToBuffer, SIGNAL(activated()), workspace, SLOT(sp_cut()));
-
-        // paste
-        QShortcut *pasteToBufferWin = new QShortcut(ctrlKey('v'), workspace);
-        connect(pasteToBufferWin, SIGNAL(activated()), workspace, SLOT(sp_paste()));
-        QShortcut *pasteToBuffer = new QShortcut(metaKey('v'), workspace);
-        connect(pasteToBuffer, SIGNAL(activated()), workspace, SLOT(sp_paste()));
-        QShortcut *pasteToBufferEmacs = new QShortcut(ctrlKey('y'), workspace);
-        connect(pasteToBufferEmacs, SIGNAL(activated()), workspace, SLOT(sp_paste()));
-
-        //comment line
-        QShortcut *toggleLineComment= new QShortcut(metaKey('/'), workspace);
-        connect(toggleLineComment, SIGNAL(activated()), this, SLOT(toggleCommentInCurrentWorkspace()));
-
-        //upcase next word
-        QShortcut *upcaseWord= new QShortcut(metaKey('u'), workspace);
-        connect(upcaseWord, SIGNAL(activated()), workspace, SLOT(upcaseWordOrSelection()));
-
-        //downcase next word
-        QShortcut *downcaseWord= new QShortcut(metaKey('l'), workspace);
-        connect(downcaseWord, SIGNAL(activated()), workspace, SLOT(downcaseWordOrSelection()));
+        shortcut_service->ConnectBufferShortcuts(signalMapper, workspace, ws);
 
         QString w = QString(tr("| %1 |")).arg(QString::number(ws));
         workspaces[ws] = workspace;
@@ -681,13 +577,7 @@ void MainWindow::setupWindowStructure() {
     // adding universal shortcuts to outputpane seems to
     // steal events from doc system!?
     // addUniversalCopyShortcuts(outputPane);
-#if QT_VERSION >= 0x050400
-    //requires Qt 5
-    new QShortcut(ctrlKey('='), this, SLOT(zoomInLogs()));
-    new QShortcut(ctrlKey('-'), this, SLOT(zoomOutLogs()));
-
-#endif
-    addUniversalCopyShortcuts(errorPane);
+    shortcut_service->addUniversalCopyShortcuts(errorPane);
     outputPane->setReadOnly(true);
     incomingPane->setReadOnly(true);
     errorPane->setReadOnly(true);
@@ -768,17 +658,16 @@ void MainWindow::setupWindowStructure() {
     docPane->setSizePolicy(policy);
     docPane->setMinimumHeight(200);
     docPane->setOpenExternalLinks(true);
-
-    QShortcut *up = new QShortcut(ctrlKey('p'), docPane);
-    up->setContext(Qt::WidgetShortcut);
-    connect(up, SIGNAL(activated()), this, SLOT(docScrollUp()));
-    QShortcut *down = new QShortcut(ctrlKey('n'), docPane);
-    down->setContext(Qt::WidgetShortcut);
-    connect(down, SIGNAL(activated()), this, SLOT(docScrollDown()));
+    // QShortcut *up = new QShortcut(shortcut_service->ctrlKey('p'), docPane);
+    // up->setContext(Qt::WidgetShortcut);
+    // connect(up, SIGNAL(activated()), this, SLOT(docScrollUp()));
+    // QShortcut *down = new QShortcut(shortcut_service->ctrlKey('n'), docPane);
+    // down->setContext(Qt::WidgetShortcut);
+    // connect(down, SIGNAL(activated()), this, SLOT(docScrollDown()));
 
     docPane->setSource(QUrl("qrc:///html/doc.html"));
 
-    addUniversalCopyShortcuts(docPane);
+    shortcut_service->addUniversalCopyShortcuts(docPane);
 
     docsplit = new QSplitter;
 
@@ -1924,65 +1813,6 @@ void MainWindow::clearOutputPanels()
     errorPane->clear();
 }
 
-QKeySequence MainWindow::ctrlKey(char key)
-{
-#ifdef Q_OS_MAC
-    return QKeySequence(QString("Meta+%1").arg(key));
-#else
-    return QKeySequence(QString("Ctrl+%1").arg(key));
-#endif
-}
-
-// Cmd on Mac, Alt everywhere else
-QKeySequence MainWindow::metaKey(char key)
-{
-#ifdef Q_OS_MAC
-    return QKeySequence(QString("Ctrl+%1").arg(key));
-#else
-    return QKeySequence(QString("alt+%1").arg(key));
-#endif
-}
-
-Qt::Modifier MainWindow::metaKeyModifier()
-{
-#ifdef Q_OS_MAC
-    return Qt::CTRL;
-#else
-    return Qt::ALT;
-#endif
-}
-
-QKeySequence MainWindow::shiftMetaKey(char key)
-{
-#ifdef Q_OS_MAC
-    return QKeySequence(QString("Shift+Ctrl+%1").arg(key));
-#else
-    return QKeySequence(QString("Shift+alt+%1").arg(key));
-#endif
-}
-
-QKeySequence MainWindow::ctrlMetaKey(char key)
-{
-#ifdef Q_OS_MAC
-    return QKeySequence(QString("Ctrl+Meta+%1").arg(key));
-#else
-    return QKeySequence(QString("Ctrl+alt+%1").arg(key));
-#endif
-}
-
-QKeySequence MainWindow::ctrlShiftMetaKey(char key)
-{
-#ifdef Q_OS_MAC
-    return QKeySequence(QString("Shift+Ctrl+Meta+%1").arg(key));
-#else
-    return QKeySequence(QString("Shift+Ctrl+alt+%1").arg(key));
-#endif
-}
-
-char MainWindow::int2char(int i){
-    return '0' + i;
-}
-
 QString MainWindow::tooltipStrShiftMeta(char key, QString str) {
 #ifdef Q_OS_MAC
     return QString("%1 (⇧⌘%2)").arg(str).arg(key);
@@ -2012,96 +1842,68 @@ void MainWindow::updateAction(QAction *action, QShortcut *sc, QString tooltip,  
     action->setStatusTip(tooltip + " (" + shortcutDesc + ")");
 }
 
-void MainWindow::createShortcuts()
-{
-    std::cout << "[GUI] - creating shortcuts" << std::endl;
-    new QShortcut(shiftMetaKey('['), this, SLOT(tabPrev()));
-    new QShortcut(shiftMetaKey(']'), this, SLOT(tabNext()));
-    new QShortcut(QKeySequence("F8"), this, SLOT(reloadServerCode()));
-    new QShortcut(QKeySequence("F9"), this, SLOT(toggleButtonVisibility()));
-    new QShortcut(shiftMetaKey('B'), this, SLOT(toggleButtonVisibility()));
-    new QShortcut(QKeySequence("F10"), this, SLOT(toggleFocusMode()));
-    new QShortcut(shiftMetaKey('F'), this, SLOT(toggleFullScreenMode()));
-    new QShortcut(shiftMetaKey('M'), this, SLOT(cycleThemes()));
-    new QShortcut(QKeySequence("F11"), this, SLOT(toggleLogVisibility()));
-    new QShortcut(shiftMetaKey('L'), this, SLOT(toggleLogVisibility()));
-    new QShortcut(QKeySequence("F12"),this, SLOT(toggleScopePaused()));
-}
-
 void  MainWindow::createToolBar()
 {
     std::cout << "[GUI] - creating tool bar" << std::endl;
     // Run
     runAct = new QAction(theme->getRunIcon(), tr("Run"), this);
-    runSc = new QShortcut(metaKey('R'), this, SLOT(runCode()));
-    updateAction(runAct, runSc, tr("Run the code in the current buffer"));
+    updateAction(runAct, shortcut_service->Shortcut("runCode"), tr("Run the code in the current buffer"));
     connect(runAct, SIGNAL(triggered()), this, SLOT(runCode()));
 
     // Stop
     stopAct = new QAction(theme->getStopIcon(), tr("Stop"), this);
-    stopSc = new QShortcut(metaKey('S'), this, SLOT(stopCode()));
-    updateAction(stopAct, stopSc, tr("Stop all running code"));
+    updateAction(stopAct, shortcut_service->Shortcut("stopCode"), tr("Stop all running code"));
     connect(stopAct, SIGNAL(triggered()), this, SLOT(stopCode()));
 
     // Record
     recAct = new QAction(theme->getRecIcon(false, false), tr("Start Recording"), this);
-    recSc = new QShortcut(shiftMetaKey('R'), this, SLOT(toggleRecording()));
-    updateAction(recAct, recSc, tr("Start recording to a WAV audio file"));
+    updateAction(recAct, shortcut_service->Shortcut("toggleRecording"), tr("Start recording to a WAV audio file"));
     connect(recAct, SIGNAL(triggered()), this, SLOT(toggleRecording()));
 
     // Save
     saveAsAct = new QAction(theme->getSaveAsIcon(), tr("Save"), this);
-    saveAsSc = new QShortcut(shiftMetaKey('S'), this, SLOT(saveAs()));
-    updateAction(saveAsAct, saveAsSc, tr("Save current buffer as an external file"));
+    updateAction(saveAsAct, shortcut_service->Shortcut("appSaveAs"), tr("Save current buffer as an external file"));
     connect(saveAsAct, SIGNAL(triggered()), this, SLOT(saveAs()));
 
     // Load
     loadFileAct = new QAction(theme->getLoadIcon(), tr("Load"), this);
-    loadFileSc = new QShortcut(shiftMetaKey('O'), this, SLOT(loadFile()));
-    updateAction(loadFileAct, loadFileSc,  tr("Load an external file in the current buffer"));
+    updateAction(loadFileAct, shortcut_service->Shortcut("appLoadFile"), tr("Load an external file in the current buffer"));
     connect(loadFileAct, SIGNAL(triggered()), this, SLOT(loadFile()));
 
     // Align
     textAlignAct = new QAction(QIcon(":/images/align.png"),
             tr("Auto-Align Text"), this);
-    textAlignSc = new QShortcut(metaKey('M'), this, SLOT(beautifyCode()));
-    updateAction(textAlignAct, textAlignSc, tr("Align code to improve readability"));
+    updateAction(textAlignAct, shortcut_service->Shortcut("textAlign"), tr("Align code to improve readability"));
     connect(textAlignAct, SIGNAL(triggered()), this, SLOT(beautifyCode()));
 
     // Font Size Increase
     textIncAct = new QAction(theme->getTextIncIcon(), tr("Text Size Up"), this);
-    textIncSc = new QShortcut(metaKey('+'), this, SLOT(zoomCurrentWorkspaceIn()));
-    updateAction(textIncAct, textIncSc, tr("Increase Text Size"));
+    updateAction(textIncAct, shortcut_service->Shortcut("textInc"), tr("Increase Text Size"));
     connect(textIncAct, SIGNAL(triggered()), this, SLOT(zoomCurrentWorkspaceIn()));
 
     // Font Size Decrease
     textDecAct = new QAction(theme->getTextDecIcon(), tr("Text Size Down"), this);
-    textDecSc = new QShortcut(metaKey('-'), this, SLOT(zoomCurrentWorkspaceOut()));
-    updateAction(textDecAct, textDecSc, tr("Decrease Text Size"));
+    updateAction(textDecAct, shortcut_service->Shortcut("textDec"), tr("Decrease Text Size"));
     connect(textDecAct, SIGNAL(triggered()), this, SLOT(zoomCurrentWorkspaceOut()));
 
     // Scope
     scopeAct = new QAction(theme->getScopeIcon(false), tr("Toggle Scope"), this);
-    scopeSc = new QShortcut(metaKey('O'), this, SLOT(toggleScope()));
-    updateAction(scopeAct, scopeSc, tr("Toggle visibility of audio oscilloscope"));
+    updateAction(scopeAct, shortcut_service->Shortcut("toggleScope"), tr("Toggle visibility of audio oscilloscope"));
     connect(scopeAct, SIGNAL(triggered()), this, SLOT(toggleScope()));
 
     // Info
     infoAct = new QAction(theme->getInfoIcon(false), tr("Show Info"), this);
-    infoSc = new QShortcut(metaKey('1'), this, SLOT(about()));
-    updateAction(infoAct, infoSc, tr("See information about Sonic Pi"));
+    updateAction(infoAct, shortcut_service->Shortcut("toggleInfo"), tr("See information about Sonic Pi"));
     connect(infoAct, SIGNAL(triggered()), this, SLOT(about()));
 
     // Help
     helpAct = new QAction(theme->getHelpIcon(false), tr("Toggle Help"), this);
-    helpSc = new QShortcut(metaKey('I'), this, SLOT(help()));
-    updateAction(helpAct, helpSc, tr("Toggle the visibility of the help pane"));
+    updateAction(helpAct, shortcut_service->Shortcut("toggleHelp"), tr("Toggle the visibility of the help pane"));
     connect(helpAct, SIGNAL(triggered()), this, SLOT(help()));
 
     // Preferences
     prefsAct = new QAction(theme->getPrefsIcon(false), tr("Toggle Preferences"), this);
-    prefsSc = new QShortcut(metaKey('P'), this, SLOT(togglePrefs()));
-    updateAction(prefsAct, prefsSc, tr("Toggle the visibility of the preferences pane"));
+    updateAction(prefsAct, shortcut_service->Shortcut("togglePrefs"), tr("Toggle the visibility of the preferences pane"));
     connect(prefsAct, SIGNAL(triggered()), this, SLOT(togglePrefs()));
 
     QWidget *spacer = new QWidget();
@@ -2185,7 +1987,7 @@ void MainWindow::createInfoPane() {
     for (int t=0; t < urls.size(); t++) {
         QTextBrowser *pane = new QTextBrowser;
         infoPanes.append(pane);
-        addUniversalCopyShortcuts(pane);
+        shortcut_service->addUniversalCopyShortcuts(pane);
         pane->setOpenExternalLinks(true);
         pane->setSource(QUrl(urls[t]));
         infoTabs->addTab(pane, tabs[t]);
@@ -2226,7 +2028,7 @@ void MainWindow::toggleRecordingOnIcon() {
 void MainWindow::toggleRecording() {
     is_recording = !is_recording;
     if(is_recording) {
-        updateAction(recAct, recSc, tr("Stop Recording"), tr("Stop Recording"));
+        updateAction(recAct, shortcut_service->Shortcut("toggleRecording"), tr("Stop Recording"), tr("Stop Recording"));
         // recAct->setStatusTip(tr("Stop Recording"));
         // recAct->setToolTip(tr("Stop Recording"));
         // recAct->setText(tr("Stop Recording"));
@@ -2236,7 +2038,7 @@ void MainWindow::toggleRecording() {
         sendOSC(msg);
     } else {
         rec_flash_timer->stop();
-        updateAction(recAct, recSc, tr("Start Recording"), tr("Start Recording"));
+        updateAction(recAct, shortcut_service->Shortcut("toggleRecording"), tr("Start Recording"), tr("Start Recording"));
         recAct->setIcon( theme->getRecIcon(is_recording, false));
 
         Message msg("/stop-recording");
@@ -2559,12 +2361,12 @@ QListWidget *MainWindow::createHelpTab(QString name) {
             SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),
             this, SLOT(updateDocPane2(QListWidgetItem*, QListWidgetItem*)));
 
-    QShortcut *up = new QShortcut(ctrlKey('p'), nameList);
-    up->setContext(Qt::WidgetShortcut);
-    connect(up, SIGNAL(activated()), this, SLOT(helpScrollUp()));
-    QShortcut *down = new QShortcut(ctrlKey('n'), nameList);
-    down->setContext(Qt::WidgetShortcut);
-    connect(down, SIGNAL(activated()), this, SLOT(helpScrollDown()));
+    // QShortcut *up = new QShortcut(ctrlKey('p'), nameList);
+    // up->setContext(Qt::WidgetShortcut);
+    // connect(up, SIGNAL(activated()), this, SLOT(helpScrollUp()));
+    // QShortcut *down = new QShortcut(ctrlKey('n'), nameList);
+    // down->setContext(Qt::WidgetShortcut);
+    // connect(down, SIGNAL(activated()), this, SLOT(helpScrollDown()));
 
     QBoxLayout *layout = new QBoxLayout(QBoxLayout::LeftToRight);
     layout->addWidget(nameList);
@@ -2629,14 +2431,6 @@ void MainWindow::setLineMarkerinCurrentWorkspace(int num) {
 //TODO remove
 void MainWindow::setUpdateInfoText(QString t) {
     //  update_info->setText(t);
-}
-
-void MainWindow::addUniversalCopyShortcuts(QTextEdit *te){
-    new QShortcut(ctrlKey('c'), te, SLOT(copy()));
-    new QShortcut(ctrlKey('a'), te, SLOT(selectAll()));
-
-    new QShortcut(metaKey('c'), te, SLOT(copy()));
-    new QShortcut(metaKey('a'), te, SLOT(selectAll()));
 }
 
 QString MainWindow::asciiArtLogo(){

@@ -10,6 +10,8 @@
 // distribution of modified versions of this work as long as this
 // notice is included.
 //++
+#ifndef SONICPISCINTILLA_H
+#define SONICPISCINTILLA_H
 
 #include <Qsci/qsciscintilla.h>
 #include "model/sonicpitheme.h"
@@ -85,3 +87,4 @@ class SonicPiScintilla : public QsciScintilla
     QMutex *mutex;
 
 };
+#endif // QSCINTILLA_H
