@@ -42,7 +42,8 @@ require 'ruby-beautify'
 require 'securerandom'
 require 'monitor'
 require 'active_support/core_ext/integer/inflections'
-
+require 'shellwords'
+require 'csv'
 
 module SonicPi
   class Stop < StandardError ; end
@@ -62,7 +63,7 @@ module SonicPi
         completion = ""
         point_line  = 0
         point_index = 0
-
+        tags = []
         while (l = lines.shift) && !(l.start_with? "# --")
           res = l.match(/\# ?([_a-z]+):(.*)/)
           if res
@@ -76,6 +77,8 @@ module SonicPi
                 point_line = v.to_i
               when "point_index"
                 point_index = v.to_i
+              when "tags"
+                tags = CSV.parse_line(v).map(&:strip).reject(&:empty?) || []
               end
             end
           end
@@ -85,12 +88,14 @@ module SonicPi
           __info "Loading snippet #{key} in #{p}" unless quiet
           completion = lines.join
 
-          __add_completion(key, completion, point_line, point_index)
+          __add_completion(key, completion, tags, point_line, point_index)
         end
       end
     end
 
-
+    def snippet_tags
+      __snippet_tags
+    end
 
     ### Start - Spider Time Management functions
     ###
@@ -561,8 +566,17 @@ module SonicPi
     #   __msg_queue.push({type: "run-buffer-idx", buffer_idx: idx})
     # end
 
-    def __add_completion(k, text, point_line_offset=0, point=0)
-      @snippets[k] = [text, point_line_offset, point]
+    def __add_completion(k, text, tags, point_line_offset=0, point=0)
+      @snippets[k] = [text, tags, point_line_offset, point]
+    end
+
+    def __random_tagged_snippet?(text)
+      key = text.index('idk ')
+      return unless key
+      values = text[(key+4)..-1]
+      values = CSV.parse_line(values).map(&:strip).reject(&:empty?)
+      new_key = @snippets.select{ |_,v| v[1].intersection(values).count == values.count }.keys.sample
+      [new_key, @snippets[new_key]] if new_key
     end
 
     def __snippet_completion?(text)
@@ -575,6 +589,10 @@ module SonicPi
       return nil
     end
 
+    def __snippet_tags
+      @snippets.values.flat_map { |v| v[1] }.reject(&:empty?).uniq.map{ |v| __info(v)}
+      nil
+    end
 
     def __buffer_indent_lines(workspace_id, buf, start_line, finish_line, point_line, point_index)
       __buffer_complete_snippet_or_indent_lines(workspace_id, buf, start_line, finish_line, point_line, point_index, false)
@@ -587,15 +605,19 @@ module SonicPi
       buf_lines = buf.lines.to_a
       if (start_line == finish_line)
         completion_line = buf_lines[start_line].to_s.rstrip
-
-        c = complete_snippet && __snippet_completion?(completion_line[0...point_index])
+        random_snippet = __random_tagged_snippet?(completion_line[0...point_index])
+        c = complete_snippet && (random_snippet || __snippet_completion?(completion_line[0...point_index]))
         if c
           snippet_completion = true
           completion_key, val = *c
-          completion_text, point_line_offset, orig_new_point_index = *val
+          completion_text, _tags, point_line_offset, orig_new_point_index = *val
           new_point_index = orig_new_point_index
           orig_completion_lines = completion_text.lines.to_a
-          completion_line_pre = completion_line[0...(point_index - completion_key.length)]
+          completion_line_pre = if random_snippet
+                                  completion_line[0...completion_line.index('idk ')]
+                                else
+                                  completion_line[0...(point_index - completion_key.length)]
+                                end
           completion_line_post = completion_line[point_index..-1]
           completion_text = completion_line_pre + completion_text + completion_line_post + (completion_line_post.empty? ? "" : "\n")
           completion_lines = completion_text.lines.to_a
