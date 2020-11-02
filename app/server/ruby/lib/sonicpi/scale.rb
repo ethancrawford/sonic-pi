@@ -257,10 +257,10 @@ module SonicPi
           num = from_roman degree
         end
       end
-      if num.nil? || num <= 0
-        raise InvalidDegreeError, "Invalid scale degree #{degree.inspect}, scale degree must be a valid number or roman numeral greater than 0"
+      if num.nil? || num.zero?
+        raise InvalidDegreeError, "Invalid scale degree #{degree.inspect}, scale degree must be a valid non-zero number or roman numeral"
       end
-      num - 1
+      num.positive? ? (num - 1) : num
     end
 
     def self.resolve_degree(degree, tonic, scale)
