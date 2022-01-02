@@ -6916,7 +6916,7 @@ end
       end
 
       def introduced
-        Version.new(2,2,0)
+        Version.new(4,0,1)
       end
 
       def synth_name
@@ -6925,28 +6925,19 @@ end
 
       def arg_defaults
         super.merge({
-          :phase => 0.25,
+          :phase => 0.5,
           :phase_slide => 0,
           :phase_slide_shape => 1,
           :phase_slide_curve => 0,
           :decay => 0.00001,
           :decay_slide => 0,
           :decay_slide_shape => 1,
-          :decay_slide_curve => 0,
-          :max_phase => 1
+          :decay_slide_curve => 0
         })
       end
 
       def specific_arg_info
         {
-          :max_phase =>
-          {
-            :doc => "The maximum phase duration in beats.",
-            :validations => [v_positive_not_zero(:max_phase)],
-            :modulatable => false,
-            :bpm_scale => true
-          },
-
           :phase =>
           {
             :doc => "The time between echoes in beats (phase duration).",
@@ -6987,6 +6978,11 @@ end
 
       def doc
         "Standard chorus with variable phase duration (time between echoes). A type of short echo that usually makes the sound \"thicker\". If you wish to have a phase duration longer than 2 beats, you need to specify the longest phase duration you'd like with the arg max_phase. Be warned, as with echo, chorus FX with very long phases can consume a lot of memory and take longer to initialise."
+      end
+
+      def on_start(studio, args_h)
+        buf, _cached = studio.allocate_buffer("chorus_buffer", 1)
+        args_h[:buf_num] = buf.id
       end
     end
 
@@ -8460,7 +8456,7 @@ Note: sliding the `phase:` opt with `phase_slide:` will also cause each echo dur
         :fx_tanh => FXTanh.new,
         :fx_pitch_shift => FXPitchShift.new,
         :fx_ring_mod => FXRingMod.new,
-        #:fx_chorus => FXChorus.new,
+        :fx_chorus => FXChorus.new,
         :fx_octaver => FXOctaver.new,
         :fx_vowel => FXVowel.new,
         :fx_flanger => FXFlanger.new,
