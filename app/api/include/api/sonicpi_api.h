@@ -187,6 +187,11 @@ struct BufferInfo
     int pointIndex;
 };
 
+struct UserSamplesInfo
+{
+    std::string folders;
+};
+
 // Callbacks from the API into your application/UI.
 // These are not on the UI thread, and marshalling is left up to the client
 struct IAPIClient
@@ -198,6 +203,7 @@ struct IAPIClient
     virtual void Version(const VersionInfo& info) = 0;
     virtual void AudioDataAvailable(const ProcessedAudio& audio) = 0;
     virtual void Buffer(const BufferInfo& info) = 0;
+    virtual void UserSamples(const UserSamplesInfo& info) = 0;
 };
 
 // Always UDP

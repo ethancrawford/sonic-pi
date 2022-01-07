@@ -26,7 +26,7 @@ class ScintillaAPI : public QsciAbstractAPIs
   void addFXArgs(QString fx, QStringList args);
   void addSynthArgs(QString fx, QStringList args);
   void addCuePath(QString path);
-  void loadSamples(QString sample_path);
+  void loadSamples(QString sample_path, bool as_symbols);
   void updateMidiOuts(QString port_info);
 
 

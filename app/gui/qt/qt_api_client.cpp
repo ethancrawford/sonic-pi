@@ -161,6 +161,11 @@ void QtAPIClient::MidiGui(const MidiInfo& info)
 
 }
 
+void QtAPIClient::UpdateUserSamplesGui(const UserSamplesInfo& info)
+{
+    m_pMainWindow->updateUserSamples(QString::fromStdString(info.folders));
+}
+
 void QtAPIClient::VersionGui(const VersionInfo& info)
 {
     QDate date = QDate(info.lastCheckedYear, info.lastCheckedMonth, info.lastCheckedDay);
@@ -224,4 +229,8 @@ void QtAPIClient::Buffer(const BufferInfo& info)
     QMetaObject::invokeMethod(this, "BufferGui", Qt::QueuedConnection, Q_ARG(SonicPi::BufferInfo, info));
 }
 
+void QtAPIClient::UserSamples(const UserSamplesInfo& info)
+{
+  QMetaObject::invokeMethod(this, "UpdateUserSamplesGui", Qt::QueuedConnection, Q_ARG(SonicPi::UserSamplesInfo, info));
+}
 } // namespace SonicPi

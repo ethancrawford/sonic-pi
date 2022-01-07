@@ -42,7 +42,7 @@ require 'ruby-beautify'
 require 'securerandom'
 require 'monitor'
 require 'active_support/core_ext/integer/inflections'
-
+require 'tomlrb'
 
 module SonicPi
   class Stop < StandardError ; end
@@ -1206,6 +1206,9 @@ module SonicPi
       new_thread
     end
 
+    def __load_user_samples_metadata
+      Tomlrb.load_file(Paths.user_samples_config_path, symbolize_keys: true)
+    end
 
 
     private
@@ -1398,6 +1401,7 @@ module SonicPi
       @gui_cue_log_idxs = Counter.new
       @gui_heartbeats = {}
       @gui_last_heartbeat = nil
+      @user_samples_paths = []
 
       @register_cue_event_lambda = lambda do |t, p, i, d, b, m, address, args, sched_ahead_time=0|
         t = t.to_r
@@ -1505,6 +1509,11 @@ module SonicPi
 
       log "Unable to initialise git repo at #{Paths.project_path}" unless @gitsave
       load_snippets(Paths.snippets_path, true)
+      __msg_queue.push(type: :load_user_samples_data, folders: __user_samples_paths.join('\n'))
+    end
+
+    def __user_samples_paths
+      @user_samples_paths = __load_user_samples_metadata.dig(:user_samples, :folders)
     end
 
     def __print_boot_messages

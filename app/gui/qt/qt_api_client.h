@@ -4,6 +4,7 @@
 #include <array>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <api/sonicpi_api.h>
 
 #include "config.h"
@@ -17,6 +18,7 @@ Q_DECLARE_METATYPE(SonicPi::StatusInfo);
 Q_DECLARE_METATYPE(SonicPi::MidiInfo);
 Q_DECLARE_METATYPE(SonicPi::VersionInfo);
 Q_DECLARE_METATYPE(SonicPi::BufferInfo);
+Q_DECLARE_METATYPE(SonicPi::UserSamplesInfo);
 
 namespace SonicPi
 {
@@ -38,6 +40,7 @@ public:
     virtual void Midi(const SonicPi::MidiInfo& info) override;
     virtual void Version(const SonicPi::VersionInfo& info) override;
     virtual void Buffer(const BufferInfo& info) override;
+    virtual void UserSamples(const SonicPi::UserSamplesInfo& info) override;
 
 signals:
     void ConsumeAudioData(const SonicPi::ProcessedAudio& audio);
@@ -49,7 +52,7 @@ public slots:
     virtual void MidiGui(const SonicPi::MidiInfo& info);
     virtual void VersionGui(const SonicPi::VersionInfo& info);
     virtual void BufferGui(const SonicPi::BufferInfo& info);
-
+    virtual void UpdateUserSamplesGui(const SonicPi::UserSamplesInfo& info);
 
 private:
     std::array<int, 20> last_incoming_path_lens;

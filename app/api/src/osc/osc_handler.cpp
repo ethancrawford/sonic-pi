@@ -307,6 +307,20 @@ void OscHandler::oscMessage(std::vector<char> buffer)
                 LOG(ERR, "Unhandled OSC msg /runs/all-completed ");
             }
         }
+        else if (msg->match("/load-user-samples-data"))
+        {
+            std::string userSamplesInfo;
+            if (msg->arg().popStr(userSamplesInfo).isOkNoMoreArgs())
+            {
+                UserSamplesInfo userSamples;
+                userSamples.folders = userSamplesInfo;
+                m_pClient->UserSamples(userSamples);
+            }
+            else
+            {
+                LOG(ERR, "Unhandled OSC msg /load-user_samples-data ");
+            }
+        }
         else
         {
             LOG(ERR, "Unhandled OSC message: " << msg->addressPattern());

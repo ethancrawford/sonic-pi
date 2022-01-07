@@ -1,0 +1,82 @@
+#                                ╘
+#                         ─       ╛▒╛
+#                          ▐╫       ▄█├
+#                   ─╟╛      █▄      ╪▓▀
+#         ╓┤┤┤┤┤┤┤┤┤  ╩▌      ██      ▀▓▌
+#          ▐▒   ╬▒     ╟▓╘    ─▓█      ▓▓├
+#          ▒╫   ▒╪      ▓█     ▓▓─     ▓▓▄
+#         ╒▒─  │▒       ▓█     ▓▓     ─▓▓─
+#         ╬▒   ▄▒ ╒    ╪▓═    ╬▓╬     ▌▓▄
+#         ╥╒   ╦╥     ╕█╒    ╙▓▐     ▄▓╫
+#                    ▐╩     ▒▒      ▀▀
+#                         ╒╪      ▐▄
+#
+#       _____             __        ____  __
+#      / ___/____  ____  /_/____   / __ \/_/
+#      \__ \/ __ \/ __ \/ / ___/  / /_/ / /
+#     ___/ / /_/ / / / / / /__   / ____/ /
+#    /____/\____/_/ /_/_/\___/  /_/   /_/
+#
+#
+#        User sample pack configuration
+#
+#
+
+## Introduction
+## ============
+#
+# Besides the built-in sample files that are distributed with the app,
+# Sonic Pi also allows you to play any of your own compatible sample files
+# that you have collected.
+#
+# A handy way to access these is by using Sonic Pi's advanced sample pack
+# filtering system (available since Sonic Pi v2.10). Using this, it is
+# possible to tell Sonic Pi to search your device for folders and file names
+# that match a desired pattern.
+#
+# This file here allows you to also find and play your own collections of
+# samples in another way - by making the names of your own samples appear in
+# the sample name dropdown list when autocompletion is enabled and you type
+# the word 'sample' followed by a space character.
+
+# The item 'folders' under [user_samples] below stores a list (shown by the
+# '[' and ']' brackets that follow it).
+# The list is designed to optionally contain folder locations that point
+# towards any collections of your own samples available from your device.
+# If it does, the names of each compatible sample found in a folder's
+# location (including sub-folders) will become available in the dropdown
+# sample name list that appears in Sonic Pi.
+#
+# Note that this file is a simple Toml config file. You can read more
+# about Toml here: https://github.com/toml-lang/toml.
+
+## How to use this file 
+## ===================
+#
+# Below, each line that starts with a # is a comment and is therefore ignored
+# by the computer. This line that you're reading is actually a comment.
+#
+# In order to make one of the following configuration lines active, you
+# need to remove the # at the beginning of the line.
+#
+# Once the # is removed, you can then modify the value on the right hand
+# side of the = to pass a new option.
+#
+# For example, if your favourite collection of samples is found on your
+# computer at /Users/me/my_awesome_sounds, you can tell Sonic Pi to look for
+# samples in that location to add to the name dropdown list by finding the
+# following line:
+# # folders = []
+# and then changing it to:
+# folders = ["/Users/me/my_awesome_sounds"]
+
+# Note, if there are any syntax issues with this file, then a warning will be
+# logged and Sonic Pi will continue to boot as if this file didn't
+# exist.
+
+# Good luck and happy live coding!
+
+[user_samples]
+# Example:
+# folders = ["/Users/me/my_awesome_sounds", "/Some/other/awesome_sounds"]
+folders = []

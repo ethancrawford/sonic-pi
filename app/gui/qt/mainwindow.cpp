@@ -183,7 +183,7 @@ MainWindow::MainWindow(QApplication& app, QSplashScreen* splash)
     initDocsWindow();
 
     //setup autocompletion
-    autocomplete->loadSamples(QString::fromStdString(m_spAPI->GetPath(SonicPiPath::SamplePath)));
+    autocomplete->loadSamples(QString::fromStdString(m_spAPI->GetPath(SonicPiPath::SamplePath)), true);
 
     QThreadPool::globalInstance()->setMaxThreadCount(3);
 
@@ -3695,6 +3695,14 @@ void MainWindow::addCuePath(QString path, QString val)
         autocomplete->addCuePath(path);
         cuePaths << path;
     }
+}
+
+void MainWindow::updateUserSamples(QString folders)
+{
+  QStringList paths = folders.split(QRegularExpression("\\n"));
+  for(int i = 0; i < paths.size(); i++) {
+    autocomplete->loadSamples(paths.at(i), false);
+  }
 }
 
 void MainWindow::toggleMidi(int silent)

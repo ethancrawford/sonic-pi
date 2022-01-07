@@ -87,6 +87,11 @@ void SPClient::Buffer(const BufferInfo& info)
     edit_window_update(info);
 }
 
+void SPClient::UserSamples(const UserSamplesInfo& info)
+{
+
+}
+
 void start_sonic_pi()
 {
     sonic.spClient = std::make_shared<SPClient>();

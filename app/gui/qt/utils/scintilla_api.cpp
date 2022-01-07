@@ -45,7 +45,7 @@ ScintillaAPI::ScintillaAPI(QsciLexer *lexer)
 
 
 
-void ScintillaAPI::loadSamples(QString sample_path) {
+void ScintillaAPI::loadSamples(QString sample_path, bool as_symbols = true) {
   QDir dir(sample_path);
   QStringList filetypes;
   filetypes << "*.wav" << "*.wave" << "*.aif" << "*.aiff" << "*.flac";
@@ -53,7 +53,11 @@ void ScintillaAPI::loadSamples(QString sample_path) {
 
   QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
   foreach (QFileInfo file, files) {
-    addSymbol(Sample, file.baseName());
+    if (as_symbols) {
+      addSymbol(Sample, file.baseName());
+    } else {
+      keywords[Sample] << QString("\"%1\"").arg(file.baseName());
+    }
   }
 }
 

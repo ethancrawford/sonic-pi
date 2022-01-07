@@ -77,6 +77,10 @@ module SonicPi
       File.absolute_path("#{etc_path}/synthdefs/compiled")
     end
 
+    def self.user_samples_config_path
+      File.absolute_path("#{home_dir_path}/config/user-samples.toml")
+    end
+
     def self.samples_path
       File.absolute_path("#{etc_path}/samples")
     end

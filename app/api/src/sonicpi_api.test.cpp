@@ -47,6 +47,11 @@ class APIClient : public IAPIClient
     {
         std::cout << info.content;
     }
+
+  virtual void UserSamples(const UserSamplesInfo& info) override
+    {
+        //std::cout << "[TestClient] : Audio Data" ;
+    }
 };
 
 TEST_CASE("Init", "API")

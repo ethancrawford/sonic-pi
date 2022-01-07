@@ -608,6 +608,9 @@ out_t = Thread.new do
           id = message[:job_id]
           action = message[:action]
           # do nothing for now
+        when :load_user_samples_data
+          folders = message[:folders]
+          gui.send("/load-user-samples-data", folders)
         else
           STDOUT.puts "Spider - Ignoring #{message}"
         end

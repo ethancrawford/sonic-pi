@@ -105,6 +105,7 @@ class MainWindow : public QMainWindow
 
 
         void addCuePath(QString path, QString val);
+        void updateUserSamples(QString folders);
         void setLineMarkerinCurrentWorkspace(int num);
         void showError(QString msg);
         void replaceBuffer(QString id, QString content, int line, int index, int first_line);

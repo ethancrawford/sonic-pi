@@ -78,7 +78,7 @@ module SonicPi
 
             @sample_paths_cache = {}
 
-            @sample_loader = SampleLoader.new("#{Paths.samples_path}/**")
+            @sample_loader = SampleLoader.new(["#{Paths.samples_path}/**"] + __user_samples_paths.map { |s| "#{s}/**" })
 
             @job_groups = {}
             @job_group_mutex = Mutex.new
